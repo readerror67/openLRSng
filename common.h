@@ -31,21 +31,19 @@ uint32_t getInterval(struct bind_data *bd)
   // usec = (x + 15) * 8200000 / baudrate
 #define BYTES_AT_BAUD_TO_USEC(bytes, bps) ((uint32_t)((bytes) + 15) * 8200000L / (uint32_t)(bps))
 
-  ret = (BYTES_AT_BAUD_TO_USEC(getPacketSize(bd), modem_params[bd->modem_params].bps) + 2000);
+  uint8_t txpack = getPacketSize(bd);
+  if (TELETMETRY_USES_16BYTES(bd->flags) && (txpack<17)) {
+    txpack=17; // make sure there is room for 16 bytes on uplink
+  }
+
+  ret = (BYTES_AT_BAUD_TO_USEC(txpack, modem_params[bd->modem_params].bps) + 2000);
 
   if (bd->flags & TELEMETRY_MASK) {
-    ret += (BYTES_AT_BAUD_TO_USEC(TELEMETRY_PACKETSIZE, modem_params[bd->modem_params].bps) + 1000);
+    ret += (BYTES_AT_BAUD_TO_USEC(TELETMETRY_USES_16BYTES(bd->flags)?17:10, modem_params[bd->modem_params].bps) + 1000);
   }
 
   // round up to ms
   ret = ((ret + 999) / 1000) * 1000;
-
-  // enable following to limit packet rate to 50Hz at most
-#ifdef LIMIT_RATE_TO_50HZ
-  if (ret < 20000) {
-    ret = 20000;
-  }
-#endif
 
   return ret;
 }

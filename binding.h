@@ -25,13 +25,17 @@
 
 #define DEFAULT_BAUDRATE 115200
 
-// FLAGS: 8bits
+// FLAGS: 16bits
 
 #define TELEMETRY_OFF       0x00
 #define TELEMETRY_PASSTHRU  0x08
 #define TELEMETRY_FRSKY     0x10 // covers smartport if used with &
 #define TELEMETRY_SMARTPORT 0x18
-#define TELEMETRY_MASK      0x18
+#define TELEMETRY_MAVLINK   0x20
+#define TELEMETRY_PASSTHRUL 0x28
+#define TELEMETRY_MASK      0x38
+
+#define TELETMETRY_USES_16BYTES(x) ((x) & TELEMETRY_MAVLINK)
 
 #define CHANNELS_4_4  0x01
 #define CHANNELS_8    0x02
@@ -40,10 +44,9 @@
 #define CHANNELS_12_4 0x05
 #define CHANNELS_16   0x06
 
-#define MUTE_TX       0x20 // do not beep on telemetry loss
-
-#define INVERTED_PPMIN 0x40
-#define MICROPPM       0x80
+#define MUTE_TX        0x100 // do not beep on telemetry loss
+#define INVERTED_PPMIN 0x200
+#define MICROPPM       0x300
 
 #define DEFAULT_FLAGS (CHANNELS_8 | TELEMETRY_PASSTHRU)
 
@@ -64,7 +67,7 @@
 #define MAX_INTERVAL 255
 
 #define BINDING_POWER     0x06 // not lowest since may result fail with RFM23BP
-#define BINDING_VERSION   9
+#define BINDING_VERSION   10
 
 #define EEPROM_PROFILE_OFFSET  0x040 // profile number on TX
 #ifdef COMPILE_TX
@@ -76,7 +79,8 @@
 #define EEPROM_FAILSAFE_OFFSET 0x180
 
 
-#define TELEMETRY_PACKETSIZE 9
+#define TELEMETRY_PACKETSIZE_SMALL 10 // up to 9 bytes payload
+#define TELEMETRY_PACKETSIZE_LARGE 17 // up to 16 bytes payload mavlink)
 
 #define BIND_MAGIC (0xDEC1BE15 + BINDING_VERSION)
 static uint8_t default_hop_list[] = {DEFAULT_HOPLIST};
@@ -110,7 +114,7 @@ struct bind_data {
   uint8_t rf_channel_spacing;
   uint8_t hopchannel[MAXHOPS];
   uint8_t modem_params;
-  uint8_t flags;
+  uint16_t flags;
 } bind_data;
 
 struct rfm22_modem_regs {

@@ -179,6 +179,15 @@ void bindPrint(void)
   case TELEMETRY_SMARTPORT:
     Serial.println(F("smartPort"));
     break;
+  case TELEMETRY_MAVLINK:
+    Serial.println(F("MAVLink"));
+    break;
+  case TELEMETRY_PASSTHRUL:
+    Serial.println(F("Transparent (hi)"));
+    break;
+  default:
+    Serial.println(F("unknown"));
+    break;
   }
 
   Serial.print(F("9) Serial baudrate:"));
@@ -862,6 +871,9 @@ void handleCLImenu(char c)
       Serial.println(F("Toggled telemetry!"));
       {
         uint8_t newf = (bind_data.flags + TELEMETRY_PASSTHRU) & TELEMETRY_MASK;
+	if (newf & 0x30) {
+	  newf = 0;
+	}
         bind_data.flags &= ~TELEMETRY_MASK;
         bind_data.flags |= newf;
       }

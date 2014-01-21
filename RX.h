@@ -490,8 +490,17 @@ void setup()
   RF_Mode = Receive;
   to_rx_mode();
 
+  // Check if we want to enable FrSky hub to smartport translation
+  if (((bind_data.flags & TELEMETRY_MASK) == TELEMETRY_SMARTPORT) &&
+      (bind_data.serial_baudrate == 9600)) {
+    bind_data.flags &= ~TELEMETRY_MASK;
+    bind_data.flags |=  TELEMETRY_FRSKY;
+  }
+
   if ((bind_data.flags & TELEMETRY_MASK) == TELEMETRY_FRSKY) {
     Serial.begin(9600);
+  } else if ((bind_data.flags & TELEMETRY_MASK) == TELEMETRY_SMARTPORT) {
+    Serial.begin(57600);
   } else {
     Serial.begin(bind_data.serial_baudrate);
   }
@@ -567,12 +576,12 @@ void loop()
       }
     } else {
       // something else than servo data...
-      if ((rx_buf[0] & 0x38) == 0x38) {
+      if ((rx_buf[0] & 0x30) == 0x30) {
         if ((rx_buf[0] ^ tx_buf[0]) & 0x80) {
           // We got new data... (not retransmission)
           uint8_t i;
           tx_buf[0] ^= 0x80; // signal that we got it
-          for (i = 0; i <= (rx_buf[0] & 7);) {
+          for (i = 0; i <= (rx_buf[0] & 0x0f);) {
             i++;
             Serial.write(rx_buf[i]);
           }
@@ -595,12 +604,12 @@ void loop()
         tx_buf[0] ^= 0x40; // swap sequence as we have new data
         if (serial_head != serial_tail) {
           uint8_t bytes = 0;
-          while ((bytes < 8) && (serial_head != serial_tail)) {
+          while ((bytes < 9) && (serial_head != serial_tail)) {
             bytes++;
             tx_buf[bytes] = serial_buffer[serial_head];
             serial_head = (serial_head + 1) % SERIAL_BUFSIZE;
           }
-          tx_buf[0] |= (0x37 + bytes);
+          tx_buf[0] |= (0x2f + bytes);
         } else {
           // tx_buf[0] lowest 6 bits left at 0
           tx_buf[1] = lastRSSIvalue;

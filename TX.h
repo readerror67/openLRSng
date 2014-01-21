@@ -403,10 +403,10 @@ void loop(void)
 
     if ((tx_buf[0] ^ rx_buf[0]) & 0x40) {
       tx_buf[0] ^= 0x40; // swap sequence to ack
-      if ((rx_buf[0] & 0x38) == 0x38) {
+      if ((rx_buf[0] & 0x30) == 0x30) {
         uint8_t i;
         // transparent serial data...
-        for (i = 0; i<= (rx_buf[0] & 7);) {
+        for (i = 0; i<= (rx_buf[0] & 15);) {
           i++;
           if (bind_data.flags & TELEMETRY_FRSKY) {
             frskyUserData(rx_buf[i]);
@@ -460,8 +460,8 @@ void loop(void)
       if ((serial_tail != serial_head) && (serial_okToSend == 2)) {
         tx_buf[0] ^= 0x80; // signal new data on line
         uint8_t bytes = 0;
-        uint8_t maxbytes = 8;
-        if (getPacketSize(&bind_data) < 9) {
+        uint8_t maxbytes = 16;
+        if (getPacketSize(&bind_data) < 17) {
           maxbytes = getPacketSize(&bind_data) - 1;
         }
         while ((bytes < maxbytes) && (serial_head != serial_tail)) {
@@ -470,15 +470,15 @@ void loop(void)
           serial_resend[bytes] = serial_buffer[serial_head];
           serial_head = (serial_head + 1) % SERIAL_BUFSIZE;
         }
-        tx_buf[0] |= (0x37 + bytes);
-        serial_resend[0] = bytes;
+        tx_buf[0] |= (0x2f + bytes);
+	serial_resend[0] = bytes;
         serial_okToSend = 3; // sent but not acked
       } else if (serial_okToSend == 4) {
         uint8_t i;
         for (i = 0; i < serial_resend[0]; i++) {
           tx_buf[i + 1] = serial_resend[i + 1];
         }
-        tx_buf[0] |= (0x37 + serial_resend[0]);
+        tx_buf[0] |= (0x2f + serial_resend[0]);
         serial_okToSend = 3; // sent but not acked
       } else {
         if (FSstate == 2) {
