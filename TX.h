@@ -258,7 +258,7 @@ void checkFS(void)
 }
 
 uint8_t tx_buf[21];
-uint8_t rx_buf[9];
+uint8_t rx_buf[17];
 
 #define SERIAL_BUFSIZE 32
 uint8_t serial_buffer[SERIAL_BUFSIZE];
@@ -397,7 +397,7 @@ void loop(void)
     linkQuality |= 1;
     RF_Mode = Receive;
     spiSendAddress(0x7f); // Send the package read command
-    for (int16_t i = 0; i < 9; i++) {
+    for (int16_t i = 0; i < getPacketSizeTelemetry(&bind_data); i++) {
       rx_buf[i] = spiReadData();
     }
 
@@ -439,7 +439,7 @@ void loop(void)
   if ((time - lastSent) >= getInterval(&bind_data)) {
     lastSent = time;
 
-    if (ppmAge < 8) {
+    if (ppmAge < 256) { // !!REVERT ME!!
       ppmAge++;
 
       if (lastTelemetry) {
@@ -460,10 +460,8 @@ void loop(void)
       if ((serial_tail != serial_head) && (serial_okToSend == 2)) {
         tx_buf[0] ^= 0x80; // signal new data on line
         uint8_t bytes = 0;
-        uint8_t maxbytes = 16;
-        if (getPacketSize(&bind_data) < 17) {
-          maxbytes = getPacketSize(&bind_data) - 1;
-        }
+        uint8_t maxbytes = min(16, getPacketSize(&bind_data) - 1);
+
         while ((bytes < maxbytes) && (serial_head != serial_tail)) {
           bytes++;
           tx_buf[bytes] = serial_buffer[serial_head];
