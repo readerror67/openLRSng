@@ -203,9 +203,9 @@ void bindPrint(void)
   Serial.println((bind_data.flags & MICROPPM) ? "Yes" : "No");
 
   Serial.print(F("Calculated packet interval: "));
-  Serial.print(getInterval(&bind_data));
+  Serial.print(getInterval());
   Serial.print(F(" == "));
-  Serial.print(1000000L / getInterval(&bind_data));
+  Serial.print(1000000L / getInterval());
   Serial.println(F("Hz"));
 }
 

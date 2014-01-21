@@ -203,7 +203,7 @@ void setupOutputs()
 {
   uint8_t i;
 
-  ppmChannels = getChannelCount(&bind_data);
+  ppmChannels = getChannelCount();
   if (rx_config.RSSIpwm == ppmChannels) {
     ppmChannels += 1;
   }
@@ -553,7 +553,7 @@ void loop()
 
     spiSendAddress(0x7f);   // Send the package read command
 
-    for (int16_t i = 0; i < getPacketSize(&bind_data); i++) {
+    for (int16_t i = 0; i < getPacketSize(); i++) {
       rx_buf[i] = spiReadData();
     }
 
@@ -605,7 +605,7 @@ void loop()
         tx_buf[0] ^= 0x40; // swap sequence as we have new data
         if (serial_head != serial_tail) {
           uint8_t bytes = 0;
-          while ((bytes < (getPacketSizeTelemetry(&bind_data) - 1)) && (serial_head != serial_tail)) {
+          while ((bytes < (getPacketSizeTelemetry() - 1)) && (serial_head != serial_tail)) {
             bytes++;
             tx_buf[bytes] = serial_buffer[serial_head];
             serial_head = (serial_head + 1) % SERIAL_BUFSIZE;
@@ -639,7 +639,7 @@ void loop()
           tx_buf[6] = countSetBits(linkQuality & 0x7fff);
         }
       }
-      tx_packet_async(tx_buf, getPacketSizeTelemetry(&bind_data));
+      tx_packet_async(tx_buf, getPacketSizeTelemetry());
 
       while(!tx_done()) {
         checkSerial();
@@ -659,7 +659,7 @@ void loop()
 
   // sample RSSI when packet is in the 'air'
   if ((numberOfLostPackets < 2) && (lastRSSITimeUs != lastPacketTimeUs) &&
-      (timeUs - lastPacketTimeUs) > (getInterval(&bind_data) - 1500)) {
+      (timeUs - lastPacketTimeUs) > (getInterval() - 1500)) {
     lastRSSITimeUs = lastPacketTimeUs;
     lastRSSIvalue = rfmGetRSSI(); // Read the RSSI value
     RSSI_sum += lastRSSIvalue;    // tally up for average
@@ -675,7 +675,7 @@ void loop()
   }
 
   if (linkAcquired) {
-    if ((numberOfLostPackets < hopcount) && ((timeUs - lastPacketTimeUs) > (getInterval(&bind_data) + 1000))) {
+    if ((numberOfLostPackets < hopcount) && ((timeUs - lastPacketTimeUs) > (getInterval() + 1000))) {
       // we lost packet, hop to next channel
       linkQuality <<= 1;
       willhop = 1;
@@ -684,12 +684,12 @@ void loop()
         lastBeaconTimeMs = 0;
       }
       numberOfLostPackets++;
-      lastPacketTimeUs += getInterval(&bind_data);
+      lastPacketTimeUs += getInterval();
       willhop = 1;
       Red_LED_ON;
       updateLBeep(true);
       set_RSSI_output();
-    } else if ((numberOfLostPackets == hopcount) && ((timeUs - lastPacketTimeUs) > (getInterval(&bind_data) * hopcount))) {
+    } else if ((numberOfLostPackets == hopcount) && ((timeUs - lastPacketTimeUs) > (getInterval() * hopcount))) {
       // hop slowly to allow resync with TX
       linkQuality = 0;
       willhop = 1;
@@ -722,7 +722,7 @@ void loop()
     }
   } else {
     // Waiting for first packet, hop slowly
-    if ((timeUs - lastPacketTimeUs) > (getInterval(&bind_data) * hopcount)) {
+    if ((timeUs - lastPacketTimeUs) > (getInterval() * hopcount)) {
       lastPacketTimeUs = timeUs;
       willhop = 1;
     }

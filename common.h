@@ -13,37 +13,36 @@ volatile uint16_t PPM[PPM_CHANNELS] = { 512, 512, 512, 512, 512, 512, 512, 512 ,
 
 const static uint8_t pktsizes[8] = { 0, 7, 11, 12, 16, 17, 21, 0 };
 
-
-uint8_t getPacketSize(struct bind_data *bd)
+uint8_t getPacketSize()
 {
-  if (TELETMETRY_16BYTES(bd->flags)) {
-    return min(pktsizes[(bd->flags & 0x07)], 17);
+  if (TELETMETRY_16BYTES(bind_data.flags)) {
+    return min(pktsizes[(bind_data.flags & 0x07)], 17);
   } else {
-    return pktsizes[(bd->flags & 0x07)];
+    return pktsizes[(bind_data.flags & 0x07)];
   }
 }
 
-uint8_t getPacketSizeTelemetry(struct bind_data *bd)
+uint8_t getPacketSizeTelemetry()
 {
-  return TELETMETRY_16BYTES(bd->flags)?17:10;
+  return TELETMETRY_16BYTES(bind_data.flags)?17:10;
 }
 
-uint8_t getChannelCount(struct bind_data *bd)
+uint8_t getChannelCount()
 {
-  return (((bd->flags & 7) / 2) + 1 + (bd->flags & 1)) * 4;
+  return (((bind_data.flags & 7) / 2) + 1 + (bind_data.flags & 1)) * 4;
 }
 
-uint32_t getInterval(struct bind_data *bd)
+uint32_t getInterval()
 {
   uint32_t ret;
   // Sending a x byte packet on bps y takes about (emperical)
   // usec = (x + 15) * 8200000 / baudrate
 #define BYTES_AT_BAUD_TO_USEC(bytes, bps) ((uint32_t)((bytes) + 15) * 8200000L / (uint32_t)(bps))
 
-  ret = (BYTES_AT_BAUD_TO_USEC(getPacketSize(bd), modem_params[bd->modem_params].bps) + 2000);
+  ret = (BYTES_AT_BAUD_TO_USEC(getPacketSize(), modem_params[bind_data.modem_params].bps) + 2000);
 
-  if (bd->flags & TELEMETRY_MASK) {
-    ret += (BYTES_AT_BAUD_TO_USEC(getPacketSizeTelemetry(bd), modem_params[bd->modem_params].bps) + 1000);
+  if (bind_data.flags & TELEMETRY_MASK) {
+    ret += (BYTES_AT_BAUD_TO_USEC(getPacketSizeTelemetry(), modem_params[bind_data.modem_params].bps) + 1000);
   }
 
   // round up to ms
