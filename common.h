@@ -42,9 +42,6 @@ uint32_t getInterval(struct bind_data *bd)
     ret += (BYTES_AT_BAUD_TO_USEC(TELETMETRY_USES_16BYTES(bd->flags)?17:10, modem_params[bd->modem_params].bps) + 1000);
   }
 
-  // round up to ms
-  ret = ((ret + 999) / 1000) * 1000;
-
   return ret;
 }
 uint8_t twoBitfy(uint16_t in)
