@@ -203,9 +203,9 @@ void bindPrint(void)
   Serial.println((bind_data.flags & MICROPPM) ? "Yes" : "No");
 
   Serial.print(F("Calculated packet interval: "));
-  Serial.print(getInterval(&bind_data));
+  Serial.print(getInterval());
   Serial.print(F(" == "));
-  Serial.print(1000000L / getInterval(&bind_data));
+  Serial.print(1000000L / getInterval());
   Serial.println(F("Hz"));
 }
 
@@ -871,7 +871,7 @@ void handleCLImenu(char c)
       Serial.println(F("Toggled telemetry!"));
       {
         uint8_t newf = (bind_data.flags + TELEMETRY_PASSTHRU) & TELEMETRY_MASK;
-	if (newf & 0x30) {
+	if ((newf & 0x30) == 0x30) { // avoid the unused choices
 	  newf = 0;
 	}
         bind_data.flags &= ~TELEMETRY_MASK;

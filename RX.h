@@ -206,7 +206,7 @@ void setupOutputs()
 {
   uint8_t i;
 
-  ppmChannels = getChannelCount(&bind_data);
+  ppmChannels = getChannelCount();
   if (rx_config.RSSIpwm == ppmChannels) {
     ppmChannels += 1;
   }
@@ -394,11 +394,11 @@ uint8_t rx_buf[21]; // RX buffer (uplink)
 // type 0x00 normal servo, 0x01 failsafe set
 // type 0x38..0x3f uplinkked serial data
 
-uint8_t tx_buf[9]; // TX buffer (downlink)(type plus 8 x data)
+uint8_t tx_buf[17]; // TX buffer (downlink)(type + upto 16 x data)
 // First byte is meta
 // MSB..LSB [1 bit uplink seq] [1bit downlink seqno] [6b telemtype]
 // 0x00 link info [RSSI] [AFCC]*2 etc...
-// type 0x38-0x3f downlink serial data 1-8 bytes
+// type 0x30-0x3f downlink serial data 1-16 bytes
 
 #define SERIAL_BUFSIZE 32
 uint8_t serial_buffer[SERIAL_BUFSIZE];
@@ -760,6 +760,7 @@ retry:
     } else {
       // something else than servo data...
       if ((rx_buf[0] & 0x30) == 0x30) {
+	// serial passthru data
         if ((rx_buf[0] ^ tx_buf[0]) & 0x80) {
           // We got new data... (not retransmission)
           tx_buf[0] ^= 0x80; // signal that we got it
@@ -788,7 +789,7 @@ retry:
         tx_buf[0] ^= 0x40; // swap sequence as we have new data
         if (serial_head != serial_tail) {
           uint8_t bytes = 0;
-          while ((bytes < 9) && (serial_head != serial_tail)) {
+          while ((bytes < (getPacketSizeTelemetry() - 1)) && (serial_head != serial_tail)) {
             bytes++;
             tx_buf[bytes] = serial_buffer[serial_head];
             serial_head = (serial_head + 1) % SERIAL_BUFSIZE;
@@ -822,15 +823,16 @@ retry:
           tx_buf[6] = countSetBits(linkQuality & 0x7fff);
         }
       }
+
 #ifdef TEST_NO_ACK_BY_CH0
       if (PPM[0]<900) {
-        tx_packet_async(tx_buf, 9);
+        tx_packet_async(tx_buf, getPacketSizeTelemetry());
         while(!tx_done()) {
           checkSerial();
         }
       }
 #else
-      tx_packet_async(tx_buf, 9);
+      tx_packet_async(tx_buf, getPacketSizeTelemetry());
       while(!tx_done()) {
         checkSerial();
       }
@@ -850,7 +852,7 @@ retry:
 
   // sample RSSI when packet is in the 'air'
   if ((numberOfLostPackets < 2) && (lastRSSITimeUs != lastPacketTimeUs) &&
-      (timeUs - lastPacketTimeUs) > (getInterval(&bind_data) - 1500)) {
+      (timeUs - lastPacketTimeUs) > (getInterval() - 1500)) {
     lastRSSITimeUs = lastPacketTimeUs;
     lastRSSIvalue = rfmGetRSSI(); // Read the RSSI value
     RSSI_sum += lastRSSIvalue;    // tally up for average
@@ -866,7 +868,7 @@ retry:
   }
 
   if (linkAcquired) {
-    if ((numberOfLostPackets < hopcount) && ((timeUs - lastPacketTimeUs) > (getInterval(&bind_data) + 1000))) {
+    if ((numberOfLostPackets < hopcount) && ((timeUs - lastPacketTimeUs) > (getInterval() + 1000))) {
       // we lost packet, hop to next channel
       linkQuality <<= 1;
       willhop = 1;
@@ -875,12 +877,12 @@ retry:
         lastBeaconTimeMs = 0;
       }
       numberOfLostPackets++;
-      lastPacketTimeUs += getInterval(&bind_data);
+      lastPacketTimeUs += getInterval();
       willhop = 1;
       Red_LED_ON;
       updateLBeep(true);
       set_RSSI_output();
-    } else if ((numberOfLostPackets == hopcount) && ((timeUs - lastPacketTimeUs) > (getInterval(&bind_data) * hopcount))) {
+    } else if ((numberOfLostPackets == hopcount) && ((timeUs - lastPacketTimeUs) > (getInterval() * hopcount))) {
       // hop slowly to allow resync with TX
       linkQuality = 0;
       willhop = 1;
@@ -913,7 +915,7 @@ retry:
     }
   } else {
     // Waiting for first packet, hop slowly
-    if ((timeUs - lastPacketTimeUs) > (getInterval(&bind_data) * hopcount)) {
+    if ((timeUs - lastPacketTimeUs) > (getInterval() * hopcount)) {
       lastPacketTimeUs = timeUs;
       willhop = 1;
     }
