@@ -474,7 +474,7 @@ void loop(void)
           serial_head = (serial_head + 1) % SERIAL_BUFSIZE;
         }
         tx_buf[0] |= (0x2f + bytes);
-	serial_resend[0] = bytes;
+        serial_resend[0] = bytes;
         serial_okToSend = 3; // sent but not acked
       } else if (serial_okToSend == 4) {
         uint8_t i;

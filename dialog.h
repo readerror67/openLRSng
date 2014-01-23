@@ -871,9 +871,9 @@ void handleCLImenu(char c)
       Serial.println(F("Toggled telemetry!"));
       {
         uint8_t newf = (bind_data.flags + TELEMETRY_PASSTHRU) & TELEMETRY_MASK;
-	if ((newf & 0x30) == 0x30) { // avoid the unused choices
-	  newf = 0;
-	}
+        if ((newf & 0x30) == 0x30) { // avoid the unused choices
+          newf = 0;
+        }
         bind_data.flags &= ~TELEMETRY_MASK;
         bind_data.flags |= newf;
       }

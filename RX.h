@@ -760,7 +760,7 @@ retry:
     } else {
       // something else than servo data...
       if ((rx_buf[0] & 0x30) == 0x30) {
-	// serial passthru data
+        // serial passthru data
         if ((rx_buf[0] ^ tx_buf[0]) & 0x80) {
           // We got new data... (not retransmission)
           tx_buf[0] ^= 0x80; // signal that we got it
