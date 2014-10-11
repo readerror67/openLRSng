@@ -14,6 +14,11 @@ uint32_t lastBeaconTimeMs;
 uint8_t  RSSI_count = 0;
 uint16_t RSSI_sum = 0;
 uint8_t  lastRSSIvalue = 0;
+#ifdef USE_DIVERSITY
+uint8_t  RSSI1 = 0;
+uint8_t  RSSI2 = 0;
+#endif
+
 uint8_t  smoothRSSI = 0;
 uint8_t  compositeRSSI = 0;
 uint16_t lastAFCCvalue = 0;
@@ -802,6 +807,11 @@ retry:
       }
 
       lastAFCCvalue = rfmGetAFCC();
+      #ifdef SERIAL_DEBUG_EXTRA
+        Serial.print("AFC: ");
+        Serial.println(lastAFCCvalue);
+      #endif
+
       Green_LED_ON;
     } else {
       uint8_t ret, slave_buf[22];
@@ -967,7 +977,17 @@ retry:
     lastRSSIvalue = rfmGetRSSI(); // Read the RSSI value
     RSSI_sum += lastRSSIvalue;    // tally up for average
     RSSI_count++;
-
+    #ifdef USE_DIVERSITY
+      RSSI1 = rfmGetRSSIAnt1();
+      RSSI2 = rfmGetRSSIAnt2();
+      #ifdef SERIAL_DEBUG
+        Serial.print("ANT1: ");
+        Serial.print(RSSI1);
+        Serial.print("    ");
+        Serial.print("ANT2: ");
+        Serial.println(RSSI2);
+      #endif
+    #endif
     if (RSSI_count > 8) {
       RSSI_sum /= RSSI_count;
       smoothRSSI = (((uint16_t)smoothRSSI * 3 + (uint16_t)RSSI_sum * 1) / 4);
@@ -1004,6 +1024,9 @@ retry:
     if (numberOfLostPackets) {
       if (rx_config.failsafeDelay && (!failsafeActive) && ((timeMs - linkLossTimeMs) > delayInMs(rx_config.failsafeDelay))) {
         failsafeActive = 1;
+        #ifdef SERIAL_DEBUG
+          Serial.println("FAILSAFE");
+        #endif
         failsafeApply();
         lastBeaconTimeMs = (timeMs + delayInMsLong(rx_config.beacon_deadtime)) | 1; //beacon activating...
       }
@@ -1018,6 +1041,9 @@ retry:
         if (((timeMs - lastBeaconTimeMs) < 0x80000000) && // last beacon is future during deadtime
             (timeMs - lastBeaconTimeMs) > (1000UL * rx_config.beacon_interval)) {
           beacon_send((rx_config.flags & STATIC_BEACON));
+          #ifdef SERIAL_DEBUG
+            Serial.println("BEACON");
+          #endif
           init_rfm(0);   // go back to normal RX
           rx_reset();
           lastBeaconTimeMs = millis() | 1; // avoid 0 in time

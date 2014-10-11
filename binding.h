@@ -514,6 +514,14 @@ void rxInitDefaults(bool save)
   rx_config.pinMapping[3] = PINMAP_ANALOG;
   rx_config.pinMapping[4] = PINMAP_RXD;
   rx_config.pinMapping[5] = PINMAP_TXD;
+#elif (BOARD_TYPE == 9)
+  rx_config.rx_type = RX_BROVERSITY;
+  rx_config.pinMapping[0] = PINMAP_PPM;
+  rx_config.pinMapping[1] = PINMAP_ANALOG;
+  rx_config.pinMapping[2] = PINMAP_RSSI;
+  rx_config.pinMapping[3] = PINMAP_ANALOG;
+  rx_config.pinMapping[4] = PINMAP_RXD;
+  rx_config.pinMapping[5] = PINMAP_TXD;
 #else
 #error INVALID RX BOARD
 #endif

@@ -3,6 +3,8 @@
 void rfmSetCarrierFrequency(uint32_t f);
 void rfmSetPower(uint8_t p);
 uint8_t rfmGetRSSI(void);
+uint8_t rfmGetRSSIAnt1(void);
+uint8_t rfmGetRSSIAnt2(void);
 void RF22B_init_parameter(void);
 uint8_t spiReadRegister(uint8_t address);
 void spiWriteRegister(uint8_t address, uint8_t data);
@@ -401,6 +403,16 @@ uint8_t rfmGetRSSI(void)
   return spiReadRegister(0x26);
 }
 
+uint8_t rfmGetRSSIAnt1(void)
+{
+  return spiReadRegister(0x28);
+}
+
+uint8_t rfmGetRSSIAnt2(void)
+{
+  return spiReadRegister(0x29);
+}
+
 uint16_t rfmGetAFCC(void)
 {
   return (((uint16_t)spiReadRegister(0x2B) << 2) | ((uint16_t)spiReadRegister(0x2C) >> 6));
@@ -470,8 +482,16 @@ void init_rfm(uint8_t isbind)
   spiWriteRegister(0x0b, 0x12);    // gpio0 TX State
   spiWriteRegister(0x0c, 0x15);    // gpio1 RX State
 #endif
+
+#ifdef USE_DIVERSITY
+  // Enable diversity stuff..
+  spiWriteRegister(0x0d, 0xf7); // GPIO2 configuration
+  spiWriteRegister(0x08, 0xe0); // enables ant div algorithm (111)
+  spiWriteRegister(0x0e, 0x00);    // gpio    0, 1,2 NO OTHER FUNCTION.
+#else
   spiWriteRegister(0x0d, 0xfd);    // gpio 2 micro-controller clk output
   spiWriteRegister(0x0e, 0x00);    // gpio    0, 1,2 NO OTHER FUNCTION.
+#endif
 
   if (isbind) {
     setModemRegs(&bind_params);

@@ -44,7 +44,7 @@
 
 //####### COMPILATION TARGET #######
 // Enable to compile transmitter code, default is RX (remove leading //)
-//#define COMPILE_TX 0 // compile RX code
+#define COMPILE_TX 0 // compile RX code
 //#define COMPILE_TX 1 // compile TX code
 
 //####### TX BOARD TYPE #######
@@ -56,13 +56,16 @@
 //#define BOARD_TYPE 4 // 4 = OpenLRSngTX / HawkEye UHF TX
 //#define BOARD_TYPE 5 // 5 = OpenLRSngRX-4/6ch (DTF UHF/HawkEye) (RX and TX supported)
 //#define BOARD_TYPE 6 // 6 = DTF UHF/HawkEye DeluxeTX (Atmega32u4)
+#define BOARD_TYPE 9 // 9 = BroversityRX
 
 //### Module type selection (default = 433, only needed for modified HW)
 //#define RFMTYPE 868
 //#define RFMTYPE 915
 
+#define USE_DIVERSITY
+
 //### Enabled Features (some features can be enabled / disabled with compile flag)
-#define CLI // Command-line interface
+//#define CLI // Command-line interface
 #define CONFIGURATOR // Phoenix Serial Protocol (required for Configurator to work)
 
 //### DEBUG flags, may be dangerous
@@ -71,6 +74,7 @@
 //#define TEST_HALT_TX_BY_CH3 // freeze TX
 //#define SLAVE_STATISTICS // output master/slave stats on RX serial
 //#define DEBUG_DUMP_PPM // dump PPM data on serial (both TX/RX)
+#define SERIAL_DEBUG
 
 //####################
 //### CODE SECTION ###
